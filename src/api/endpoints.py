@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -63,13 +63,17 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None), authorizatio
 async def create_message(request: ClaudeMessagesRequest, http_request: Request, _: None = Depends(validate_api_key)):
     try:
         logger.debug(f"Processing Claude request: model={request.model}, stream={request.stream}")
-
+        masked_headers: dict[str, Any] = {
+            k: v if k in ("Authorization", "x-api-key", "meta-data") else "*****"
+            for k, v in http_request.headers.items()
+        }
+        logger.debug(f"Claude request headers: {masked_headers}")
         # Generate unique request ID for cancellation tracking
         request_id = str(uuid.uuid4())
 
         # Convert Claude request to OpenAI format
         openai_request = convert_claude_to_openai(request, model_manager)
-        logger.info(f"Openai request: {openai_request}")
+        logger.debug(f"Openai request: {openai_request}")
 
         # Determine if this is a small model request
         openai_model = openai_request.get("model")

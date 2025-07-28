@@ -68,14 +68,22 @@ class OpenAIClient:
             return completion.model_dump()
 
         except AuthenticationError as e:
-            raise HTTPException(status_code=401, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=401, detail=self.classify_openai_error(str(e))
+            ) from None
         except RateLimitError as e:
-            raise HTTPException(status_code=429, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=429, detail=self.classify_openai_error(str(e))
+            ) from None
         except BadRequestError as e:
-            raise HTTPException(status_code=400, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=400, detail=self.classify_openai_error(str(e))
+            ) from None
         except APIError as e:
             status_code = getattr(e, "status_code", 500)
-            raise HTTPException(status_code=status_code, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=status_code, detail=self.classify_openai_error(str(e))
+            ) from None
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}") from None
 
@@ -120,14 +128,22 @@ class OpenAIClient:
             yield "data: [DONE]"
 
         except AuthenticationError as e:
-            raise HTTPException(status_code=401, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=401, detail=self.classify_openai_error(str(e))
+            ) from None
         except RateLimitError as e:
-            raise HTTPException(status_code=429, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=429, detail=self.classify_openai_error(str(e))
+            ) from None
         except BadRequestError as e:
-            raise HTTPException(status_code=400, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=400, detail=self.classify_openai_error(str(e))
+            ) from None
         except APIError as e:
             status_code = getattr(e, "status_code", 500)
-            raise HTTPException(status_code=status_code, detail=self.classify_openai_error(str(e))) from None
+            raise HTTPException(
+                status_code=status_code, detail=self.classify_openai_error(str(e))
+            ) from None
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}") from None
 

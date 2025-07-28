@@ -6,13 +6,14 @@ from src.core.config import config
 from src.core.constants import Constants
 from src.models.claude import ClaudeMessage, ClaudeMessagesRequest
 
-# logger = logging.getLogger(__name__)
-
 
 def convert_claude_to_openai(
     claude_request: ClaudeMessagesRequest, model_manager
 ) -> Dict[str, Any]:
     """Convert Claude API request format to OpenAI format."""
+    logger.info(
+        f"Converting Claude request: {claude_request.model_dump(exclude={'messages', 'system', 'tools', 'tool_choice'})}"
+    )
 
     # Map model
     openai_model = model_manager.map_claude_model_to_openai(claude_request.model)
@@ -88,7 +89,7 @@ def convert_claude_to_openai(
         openai_request["extra_body"] = config.big_model_extra_body
     elif config.big_model_extra_body:  # Default to big model extra body
         openai_request["extra_body"] = config.big_model_extra_body
-    
+
     logger.debug(
         f"Converted Claude request to OpenAI format: {json.dumps(openai_request, indent=2, ensure_ascii=False)}"
     )

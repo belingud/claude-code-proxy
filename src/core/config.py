@@ -74,7 +74,9 @@ try:
     config = Config()
     print(f" Configuration loaded: API_KEY={'*' * 20}..., BASE_URL='{config.openai_base_url}'")
     if config.small_model_base_url:
-        print(f"   SMALL_MODEL_API_KEY={'*' * 20}..., SMALL_MODEL_BASE_URL='{config.small_model_base_url}'")
+        print(
+            f"   SMALL_MODEL_API_KEY={'*' * 20}..., SMALL_MODEL_BASE_URL='{config.small_model_base_url}'"
+        )
 except Exception as e:
     print(f"=4 Configuration Error: {e}")
     sys.exit(1)
