@@ -1,12 +1,12 @@
 import json
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 from venv import logger
-from src.core.constants import Constants
-from src.models.claude import ClaudeMessagesRequest, ClaudeMessage
-from src.core.config import config
-import logging
 
-logger = logging.getLogger(__name__)
+from src.core.config import config
+from src.core.constants import Constants
+from src.models.claude import ClaudeMessage, ClaudeMessagesRequest
+
+# logger = logging.getLogger(__name__)
 
 
 def convert_claude_to_openai(
@@ -30,17 +30,12 @@ def convert_claude_to_openai(
             for block in claude_request.system:
                 if hasattr(block, "type") and block.type == Constants.CONTENT_TEXT:
                     text_parts.append(block.text)
-                elif (
-                    isinstance(block, dict)
-                    and block.get("type") == Constants.CONTENT_TEXT
-                ):
+                elif isinstance(block, dict) and block.get("type") == Constants.CONTENT_TEXT:
                     text_parts.append(block.get("text", ""))
             system_text = "\n\n".join(text_parts)
 
         if system_text.strip():
-            openai_messages.append(
-                {"role": Constants.ROLE_SYSTEM, "content": system_text.strip()}
-            )
+            openai_messages.append({"role": Constants.ROLE_SYSTEM, "content": system_text.strip()})
 
     # Process Claude messages
     i = 0
@@ -74,7 +69,7 @@ def convert_claude_to_openai(
         i += 1
 
     # Build OpenAI request
-    openai_request = {
+    openai_request: Dict[str, Any] = {
         "model": openai_model,
         "messages": openai_messages,
         "max_tokens": min(
@@ -84,6 +79,16 @@ def convert_claude_to_openai(
         "temperature": claude_request.temperature,
         "stream": claude_request.stream,
     }
+
+    # Add extra body parameters based on model type
+    model_lower = claude_request.model.lower()
+    if "haiku" in model_lower and config.small_model_extra_body:
+        openai_request["extra_body"] = config.small_model_extra_body
+    elif ("sonnet" in model_lower or "opus" in model_lower) and config.big_model_extra_body:
+        openai_request["extra_body"] = config.big_model_extra_body
+    elif config.big_model_extra_body:  # Default to big model extra body
+        openai_request["extra_body"] = config.big_model_extra_body
+    
     logger.debug(
         f"Converted Claude request to OpenAI format: {json.dumps(openai_request, indent=2, ensure_ascii=False)}"
     )
@@ -133,7 +138,7 @@ def convert_claude_user_message(msg: ClaudeMessage) -> Dict[str, Any]:
     """Convert Claude user message to OpenAI format."""
     if msg.content is None:
         return {"role": Constants.ROLE_USER, "content": ""}
-    
+
     if isinstance(msg.content, str):
         return {"role": Constants.ROLE_USER, "content": msg.content}
 
@@ -171,8 +176,8 @@ def convert_claude_assistant_message(msg: ClaudeMessage) -> Dict[str, Any]:
     tool_calls = []
 
     if msg.content is None:
-        return {"role": Constants.ROLE_ASSISTANT, "content": None}
-    
+        return {"role": Constants.ROLE_ASSISTANT, "content": ""}
+
     if isinstance(msg.content, str):
         return {"role": Constants.ROLE_ASSISTANT, "content": msg.content}
 
@@ -191,13 +196,13 @@ def convert_claude_assistant_message(msg: ClaudeMessage) -> Dict[str, Any]:
                 }
             )
 
-    openai_message = {"role": Constants.ROLE_ASSISTANT}
+    openai_message: Dict[str, Any] = {"role": Constants.ROLE_ASSISTANT}
 
     # Set content
     if text_parts:
         openai_message["content"] = "".join(text_parts)
     else:
-        openai_message["content"] = None
+        openai_message["content"] = ""
 
     # Set tool calls
     if tool_calls:
@@ -246,7 +251,7 @@ def parse_tool_result_content(content):
                 else:
                     try:
                         result_parts.append(json.dumps(item, ensure_ascii=False))
-                    except:
+                    except Exception:
                         result_parts.append(str(item))
         return "\n".join(result_parts).strip()
 
@@ -255,10 +260,10 @@ def parse_tool_result_content(content):
             return content.get("text", "")
         try:
             return json.dumps(content, ensure_ascii=False)
-        except:
+        except Exception:
             return str(content)
 
     try:
         return str(content)
-    except:
+    except Exception:
         return "Unparseable content"
